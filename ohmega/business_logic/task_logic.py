@@ -1,10 +1,11 @@
 from abc import ABCMeta
 
-from ohmega.services import TaskDiffService, TaskStorageService, TaskAPIService
+#from ohmega.services import TaskDiffService, TaskStorageService
+from ohmega.services.task_api_service import TaskAPIService
 
 #Apply logic to the tasks in a project.
 # (For now, the tasks can only apply on a per-project basis)
-class TaskLogic(Object):
+class TaskLogic:
     __metaclass__ = ABCMeta
 
     @classmethod
@@ -15,9 +16,9 @@ class TaskLogic(Object):
     def __init__(self, project_id, client):
         self._project_id = project_id
         self._client = client
-        self._storage_service = TaskStorageService()
-        self._task_diff_service = TaskDiffService()
-        self._task_api_service = TaskAPIService()
+        #self._storage_service = TaskStorageService()
+        #self._task_diff_service = TaskDiffService()
+        self._task_api_service = TaskAPIService(client)
 
 
     def task_scanned_template(task_id):
@@ -30,7 +31,7 @@ class TaskLogic(Object):
         updated_task = self._task_api_service.patch_task(now_task, diff)
         self._storage_service.store_task(updated_task)
 
-        @abstractmethod
+    @abstractmethod
     def task_scanned(now_task):
         """Subclasses should implement this method in order to take action when a task is scanned
            There is no diff passed, because this method is called when there is no information
