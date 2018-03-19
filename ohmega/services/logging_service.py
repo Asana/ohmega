@@ -14,7 +14,7 @@ class BasicLoggingConfiguration(IntEnum):
 class LoggingService(object):
 
     @classmethod
-    def getLogFilename(klass):
+    def get_log_filename(klass):
         # First, try the directory of the executable
         log_base_path = os.path.abspath(sys.path[0])
         if log_base_path == '':
@@ -24,7 +24,7 @@ class LoggingService(object):
         return os.path.join(log_base_path, "logs", "ohmega.log")
 
     @classmethod
-    def createLogDirectory(klass):
+    def create_log_directory(klass):
         return os.makedirs(os.path.dirname(LoggingService.getLogFilename(), 0o644))
         
 
@@ -34,9 +34,9 @@ class LoggingService(object):
         # Note that COMMAND_LINE and None are basically the same thing, meaning that this
         # configuration will be used by default.
         if logging_configuration == None or logging_configuration & BasicLoggingConfiguration.COMMAND_LINE:
-            self.addCommandLineLogging()
+            self.add_command_line_logging()
         if logging_configuration & BasicLoggingConfiguration.COMMAND_LINE_DEBUG:
-            self.addCommandLineDebugLogging()
+            self.add_command_line_debug_logging()
         # TODO: do an int flag with this, which isn't supported in 2.7
         #if logging_configuration & BasicLoggingConfiguration.TWO_SHORT_ROTATING_FILES:
         #    self.addShortRotatingLogging()
@@ -47,28 +47,28 @@ class LoggingService(object):
     def logger(self):
         return logging
 
-    def addCommandLineLogging(self):
+    def add_command_line_logging(self):
         formatter = logging.Formatter("%(levelname)-8.8s:%(filename)12.12s@%(lineno)-4.4s %(message)s")
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(logging.INFO)
         logging.getLogger().addHandler(stream_handler)
 
-    def addCommandLineDebugLogging(self):
+    def add_command_line_debug_logging(self):
         formatter = logging.Formatter("%(levelname)-8.8s:%(filename)12.12s@%(lineno)-4.4s %(message)s")
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(logging.DEBUG)
         logging.getLogger().addHandler(stream_handler)
 
-    def addShortRotatingLogging(self):
+    def add_short_rotating_file_logging(self):
         formatter = logging.Formatter("%(levelname)-8.8s:%(filename)12.12s@%(lineno)-4.4s [%(asctime)-23.23s] $(message)s")
         LoggingService.make_log_dir()
         # 2 1-MB log files
         file_handler = logging.handlers.RotatingFileHandler(LoggingService.getLogFilename(),
             'a', 1024 * 1024 * 1, 1, 'utf8')
     
-    def addMediumRotatingLogging(self):
+    def add_medium_rotating_file_logging(self):
         formatter = logging.Formatter("%(levelname)-8.8s:%(filename)12.12s@%(lineno)-4.4s [%(asctime)-23.23s] $(message)s")
         LoggingService.make_log_dir()
         # 10 10-MB log files
