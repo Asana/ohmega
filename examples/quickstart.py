@@ -9,24 +9,22 @@ import asana
 sys.path.append(os.path.abspath("../"))
 
 from ohmega.services.logging_service import LoggingService, BasicLoggingConfiguration
-from ohmega.services.configuration_service import ConfigurationService
-#from ohmega.business_logic.task_logic import TaskLogic
+from ohmega.business_logic.asana_callbacks import AsanaCallbacks
 
 ls = LoggingService(BasicLoggingConfiguration.COMMAND_LINE)
-ls.logger.info("HAI")
+ls.logger.info("Hello, world!")
 
 # This should be done under the hood by delegating to something that knows how to get creds. Ignore for now.
 _client = asana.Client.access_token(os.environ['ASANA_PERSONAL_ACCESS_TOKEN'])
-cs = ConfigurationService(_client, 157953484489631)
 ############
 
-config = cs.read_config_from_asana()
-ls.logger.info(config)
+callback_manager = AsanaCallbacks(_client)
 
-# Based on the config, do some business logic.
+# Define a callback
+def log_on_task_scanned(task, client):
+    ls.logger.info(task)
 
-#class DoSomethingUseful(object):
-#    def task_scanned(now_task):
-#        ls.logger.info(task)
 
-#TaskLogic.register(DoSomethingUseful)
+callback_manager.register_task_scanned_callback(log_on_task_scanned)
+
+callback_manager.scan_project(157953484489631)
