@@ -7,6 +7,9 @@ name = "pypi"
 
 [packages]
 sqlalchemy = "*"
+asana = "*"
+six = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "2.7"
