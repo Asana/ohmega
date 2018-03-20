@@ -46,6 +46,6 @@ class ConfigurationService(object):
         """Recursively descend through subtasks to build a Python config structure"""
         config_object = dict()
         for subtask in self._client.tasks.subtasks(task[u'id']):
-            config_values = subtask[u'name'].split(':')
-            config_object[config_values[0]] = yaml.load(config_values[1])
+            config = yaml.load(subtask[u'name'])
+            config_object[config.keys()[0]] = config.values()[0]
         return config_object
