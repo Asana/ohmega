@@ -19,14 +19,9 @@ This is what Ohmega is designed to do: to provide an environment that allows a "
 
 # Where to start learning about Ohmega
 
-# The examples directory provide some basic use cases built with Ohmega if you want to get up to speed quickly.
+The examples directory provide some basic use cases built with Ohmega if you want to get up to speed quickly.
 
 # Implementation details
 
 Ohmega is designed to be tested against an actual, running instance of Asana in order to get perfect end-to-end behavior for the entire system. To that end, the #TODO automated tests will be run on commit against a sandbox environment that Asana maintains.
 
-Data that is needed by Ohmega will be stored in a sqlite database. This database has either-there-and-not-corrupt-or-not-there semantics, and if it is deleted or gets corrupted on disk, a full scan (as if run for the first time) will be performed.
-
-When diffs are possible, we use jsondiff
-
-This will only work on a per-project configuration for 10,000 tasks. It will shut down and let the project or app maintainer know that they've got to do something to clear things up.
