@@ -1,7 +1,7 @@
 
 #Apply logic to the tasks in a project.
 # (For now, the tasks can only apply on a per-project basis)
-class AsanaCallbacks:
+class AsanaCallbacks(object):
 
     def __init__(self, client):
         self._client = client

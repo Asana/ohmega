@@ -1,8 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-#from ohmega.services import TaskDiffService, TaskStorageService
-from ohmega.services.task_api_service import TaskAPIService
-
 #Apply logic to the tasks in a project.
 # (For now, the tasks can only apply on a per-project basis)
 class TaskLogic:
