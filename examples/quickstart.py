@@ -7,7 +7,7 @@ import os
 # we do this so you can try locally without installing.
 sys.path.append(os.path.abspath("../"))
 
-from ohmega.execution_environment.command_line import CommandLineBatchRunner
+from ohmega.execution_environment.command_line_batch_runner import CommandLineBatchRunner
 
 # Define a callback
 def log_on_task_scanned(task, client):

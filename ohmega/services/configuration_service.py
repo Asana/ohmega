@@ -34,7 +34,6 @@ class ConfigurationService(object):
         for task in self._runner.client.tasks.find_by_project(self._project_id, fields="name,tags,tags.name"):
             self._runner.log.debug("Investigating for config: %d", task[u'id'])
             for tag in task[u'tags']:
-                print tag
                 if tag[u'id'] == 599494283563095:
                     self._runner.log.debug("Matched %d via tag", task[u'id'])
                     # Fix the name if it doesn't match

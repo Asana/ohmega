@@ -17,4 +17,4 @@ from ohmega.execution_environment.command_line_batch_runner import CommandLineBa
 project_id = 157953484489631
 runner = CommandLineBatchRunner(project_id)
 # Print the configuration (a Python dictionary)
-print (runner.configuration.read_config_from_asana())
+print(runner.configuration.read_config_from_asana())
