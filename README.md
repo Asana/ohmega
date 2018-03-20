@@ -1,7 +1,7 @@
 # Ohmega
 The Asana Ohmega process automation toolkit
 
-###LOGO
+![Ohmega logo](ohmega_logo.png)
 
 # What is Ohmega?
 
