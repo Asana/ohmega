@@ -1,4 +1,4 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 #from ohmega.services import TaskDiffService, TaskStorageService
 from ohmega.services.task_api_service import TaskAPIService
@@ -18,18 +18,18 @@ class TaskLogic:
         self._client = client
         #self._storage_service = TaskStorageService()
         #self._task_diff_service = TaskDiffService()
-        self._task_api_service = TaskAPIService(client)
+        #self._task_api_service = TaskAPIService(client)
 
 
     def task_scanned_template(task_id):
         """Template method strategy for creating action for taskScanned - we only have the current task state."""
-        now_task = self._task_api_service.get_current_task_state(task_id)
-
+        #now_task = self._task_api_service.get_current_task_state(task_id)
+        task = _client.tasks.find_by_id(task_id)
         altered_task = self.task_scanned(task)
 
-        diff = self._task_diff_service.calculate_diff_for_tasks(now_task, altered_task)
-        updated_task = self._task_api_service.patch_task(now_task, diff)
-        self._storage_service.store_task(updated_task)
+        #diff = self._task_diff_service.calculate_diff_for_tasks(now_task, altered_task)
+        #updated_task = self._task_api_service.patch_task(now_task, diff)
+        #self._storage_service.store_task(updated_task)
 
     @abstractmethod
     def task_scanned(now_task):
