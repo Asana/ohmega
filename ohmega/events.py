@@ -1,6 +1,11 @@
+import logging
+
 import asana
 
 from . import db
+
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: Make this flexible if we want to allow consumers to manage which events
