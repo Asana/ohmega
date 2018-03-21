@@ -8,8 +8,8 @@ def main():
     events_mgr = events.EventsManager(asana_client)
 
     resources = events_mgr.sync_resources([
-        {'id': '537972519778707', 'type': 'project'},
-        {'id': '601743188547449', 'type': 'task'}
+        {'id': 537972519778707, 'type': 'project'},
+        {'id': 601743188547449, 'type': 'task'}
     ])
 
     with open('resources_test.json', 'w') as fobj:
