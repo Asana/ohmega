@@ -1,6 +1,15 @@
+import logging
+import logging.config
 import json
 
+import yaml
+
 from ohmega import oauth, events
+
+
+def init_logging():
+    with open('logging.yaml') as fobj:
+        logging.config.dictConfig(yaml.load(fobj))
 
 
 def main():
