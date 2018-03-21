@@ -1,9 +1,11 @@
+import logging
 import os
 import asana
 from ohmega.business_logic.asana_callbacks import AsanaCallbacks
 from ohmega.services.configuration_service import ConfigurationService
-from ohmega.services.logging_service \
-        import LoggingService, LoggingConfiguration
+
+
+logger = logging.getLogger(__name__)
 
 
 class CommandLineBatchRunner(object):
@@ -18,8 +20,6 @@ class CommandLineBatchRunner(object):
 
     def __init__(self, scope_project_id, configuration_project_id=None):
         self._project_id = scope_project_id
-        self._logging_service = LoggingService(
-                LoggingConfiguration.COMMAND_LINE)
         if configuration_project_id is None:
             configuration_project_id = scope_project_id
         self._configuration_service = ConfigurationService(
@@ -37,12 +37,6 @@ class CommandLineBatchRunner(object):
     @property
     def callback_manager(self):
         return self._callback_manager
-
-    @property
-    def log(self):
-        """ Convenience property so we can write runner.log.info("something")
-        """
-        return self._logging_service.logger
 
     @property
     def configuration(self):
