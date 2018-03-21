@@ -31,16 +31,27 @@ class EventsManager(object):
 
         return events
 
-    def _filter_events(self, events):
+    def _filter_events_to_task_ids(self, events):
+        """Filter a list of events to a set of relevant task IDs.
+
+        Filter a list of events to a set of relevant task IDs to pull down
+        information from the Asana API. This filters only "added" or "changed"
+        task events and returns the unique set of task IDs associated with
+        those events.
+
+        :param list events: A list of event objects (dicts) returned from
+            Asana's API.
+
+        """
         # FIXME: Note that this explicitly only listens to task events - to my
         # knowledge assignment happens as a story, and may not trigger an
         # event, so we should look into whether we need to pull down story
         # events as well.
-        return [
-            e for e in events
+        return frozenset(
+            e['resource']['id'] for e in events
             if e['type'] == 'task'
             and e['action'] in ('added', 'changed')
-        ]
+        )
 
     def _retrieve_tasks(
             self, resource_id, sync_token, resource_type='project'):
@@ -60,12 +71,12 @@ class EventsManager(object):
                     self.asana_client.projects.tasks(
                         resource_id, fields=self.__TASK_FIELDS))
             else:
-                events = self._filter_events(events)
+                task_ids = self._filter_events_to_task_ids(events)
                 tasks = []
-                for e in events:
+                for tid in task_ids:
                     try:
                         tasks.append(self.asana_client.tasks.find_by_id(
-                            e['resource']['id'], fields=self.__TASK_FIELDS))
+                            tid, fields=self.__TASK_FIELDS))
                     except asana.error.AsanaError:
                         # TODO: Log a warning here
                         continue
