@@ -18,7 +18,7 @@ metadata = MetaData()
 
 asana_sync_tokens = Table(
     'asana_sync_tokens', metadata,
-    Column('project_id', BigInteger, index=True, primary_key=True),
+    Column('resource_id', BigInteger, index=True, primary_key=True),
     Column('sync_token', String, nullable=False))
 
 asana_oauth_tokens = Table(
@@ -54,25 +54,27 @@ class DBManager(object):
 
 # Event Tokens
 
-def get_existing_sync_tokens(project_ids):
-    if not project_ids:
+def get_sync_tokens(resource_ids):
+    if not resource_ids:
         return {}
 
     conn = DBManager().db_engine.connect()
-    sync_tokens = dict(conn.execute(select([asana_sync_tokens]).where(
-        asana_sync_tokens.c.project_id.in_(project_ids))
-    ).fetchall())
+    sync_tokens = conn.execute(
+        select([
+            asana_sync_tokens.c.resource_id,
+            asana_sync_tokens.c.sync_token]
+        ).where(asana_sync_tokens.c.resource_id.in_(resource_ids))).fetchall()
 
-    return sync_tokens
+    return dict(sync_tokens)
 
 
-def save_sync_token(db_engine, project_id, sync_token):
+def save_sync_token(resource_id, sync_token):
     conn = DBManager().db_engine.connect()
     with conn.begin():
         conn.execute(asana_sync_tokens.delete().where(
-            asana_sync_tokens.c.project_id == project_id))
+            asana_sync_tokens.c.resource_id == resource_id))
         conn.execute(
-            asana_sync_tokens.insert(), project_id=project_id,
+            asana_sync_tokens.insert(), resource_id=resource_id,
             sync_token=sync_token)
 
 
