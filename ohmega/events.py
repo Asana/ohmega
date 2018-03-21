@@ -19,10 +19,12 @@ class EventsManager(object):
 
     def _get_events(self, resource_id, sync_token):
         try:
-            events = self.asana_client.events.get(params={
+            events_dict = self.asana_client.events.get(params={
                 'resource': resource_id,
                 'sync': sync_token
             })
+            events = events_dict['data']
+            db.save_sync_token(resource_id, events_dict['sync'])
         except asana.error.InvalidTokenError as e:
             db.save_sync_token(resource_id, e.sync)
             events = None
