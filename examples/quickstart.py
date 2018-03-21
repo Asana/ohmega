@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+import logging
+import logging.config
 import sys
 import os
+import yaml
 from ohmega.execution_environment.command_line_batch_runner\
     import CommandLineBatchRunner
 
@@ -9,16 +12,20 @@ from ohmega.execution_environment.command_line_batch_runner\
 sys.path.append(os.path.abspath("../"))
 
 
+with open('../logging.yaml') as fobj:
+    logging.config.dictConfig(yaml.load(fobj))
+
+
 # Define a callback
-def log_on_task_scanned(task, client):
-    runner.log.info("Task scanned: {} {}".format(task[u'id'], task[u'name']))
+def print_on_task_scanned(task, client):
+    print("Task scanned: {} {}".format(task[u'id'], task[u'name']))
 
 
-# Spoof config, which is normally read from a known Asana location.
-# TODO: we don't want the Asana-read config to be able to change the project.
-# We should have some sort of way to pin this to only the right one.
-
+# Set up a command line runner
 runner = CommandLineBatchRunner(157953484489631)
+# Get the callback manager from the runner
 callback_manager = runner.callback_manager
-callback_manager.register_task_scanned_callback(log_on_task_scanned)
+# Register our callback
+callback_manager.register_task_scanned_callback(print_on_task_scanned)
+# Run it!
 runner.run()
