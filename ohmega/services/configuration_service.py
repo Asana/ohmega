@@ -27,7 +27,14 @@
 
 # The config is now set.
 
+import datetime
+import logging
+import sys
+import traceback
 import yaml
+
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigurationService(object):
@@ -37,20 +44,54 @@ class ConfigurationService(object):
         self._project_id = project_id
 
     def read_config_from_asana(self):
-        config_task = self.find_config_task()
-        config = self.read_config_from_task_or_subtask(config_task)
-        return config
+        config_task = None
+        config = None
+        try:
+            config_task = self._find_config_task()
+            config = self._read_config_from_task_or_subtask(config_task)
+            self._update_config_task_description(config_task, config)
+            logger.info("Successfully parsed configuration")
+            logger.debug(config)
+            return config
+        except Exception as ex:
+            logger.warn("Failed to parse configuration: %s",
+                        traceback.format_tb(sys.exc_info()[2]))
+            self._update_config_task_description(
+                    config_task, config, ex)
+            return None
+
+    def _update_config_task_description(
+            self, config_task, config, exception=None):
+
+        if exception is None:
+            exception_string = "None"
+        else:
+            exception_string = traceback.format_tb(sys.exc_info()[2])
+        template = """<b>Last run:</b> {datetime}
+<b>Any exception?</b> {exception}
+<b>Configuration:</b>
+{config}"""
+        report = template.format(
+                datetime=datetime.datetime.now().isoformat(),
+                exception=exception_string,
+                config=yaml.safe_dump(
+                    config,
+                    default_flow_style=False))
+        self._runner.client.tasks.update(
+                config_task[u'id'],
+                html_notes=report)
 
     # TODO: do we want to implement a way to restore this tag as well? That is,
     # on first startup with no config storage datastore, do we want to look for
     # tasks like this by name only, and when we find one, infer that its tag is
     # the config tag?
-    def find_config_task(self):
+    def _find_config_task(self):
         # XCXC if not self._storage_service.config_task_id_for_project(self._project_id):
         for task in self._runner.client.tasks.find_by_project(
                 self._project_id, fields="name,tags,tags.name"):
-            self._runner.log.debug("Investigating for config: %d", task[u'id'])
+            logger.debug("Investigating for config: %d", task[u'id'])
             for tag in task[u'tags']:
+                # TODO: de-hardcode this
                 if tag[u'id'] == 599494283563095:
                     self._runner.log.debug("Matched %d via tag", task[u'id'])
                     # Fix the name if it doesn't match
@@ -61,12 +102,29 @@ class ConfigurationService(object):
                     self._runner.log.info("Config task found: %d", task[u'id'])
                     return task
 
-    def read_config_from_task_or_subtask(self, task):
+    def _read_config_from_task_or_subtask(self, task):
         """Recursively descend through subtasks to build a Python config
         structure
         """
         config_object = dict()
-        for subtask in self._runner.client.tasks.subtasks(task[u'id']):
+        for subtask in self._runner.client.tasks.subtasks(task[u'id'],
+                fields="name,notes,subtasks"):
             config = yaml.load(subtask[u'name'])
-            config_object[config.keys()[0]] = config.values()[0]
+            # If a config is of type "dict", infer it's a leaf node.
+            if type(config) is dict:
+                key = config.keys()[0]
+                value = config.values()[0]
+                config_object[key] = value
+            # If a config is of type "string"
+            if type(config) is str:
+                key = config
+                # If it has no subtasks, it's a leaf and the value is
+                # the description of the task.
+                if len(subtask[u'subtasks']) == 0:
+                    value = yaml.load(subtask[u'notes'])
+                    config_object[key] = value
+                else:
+                    # Recurse
+                    sub_config = self._read_config_from_task_or_subtask(subtask)
+                    config_object[key] = sub_config
         return config_object
