@@ -19,7 +19,7 @@ handlers:
     encoding: utf-8
 loggers:
   ohmega:
-    level: INFO
+    level: DEBUG
     handlers:
       - console
       - file

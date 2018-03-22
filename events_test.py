@@ -13,6 +13,7 @@ def init_logging():
 
 
 def main():
+    init_logging()
     asana_client = oauth.asana_cli_oauth_client()
     events_mgr = events.EventsManager(asana_client)
 
