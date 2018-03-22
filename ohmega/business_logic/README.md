@@ -1,4 +1,4 @@
-#Business logic module
+# Business logic module
 
 This directory contains several files that define the interface for your business logic - the actual goal of what your integration is meant to do. There are [intended] to be submodules for several types of common business logic goals:
 
