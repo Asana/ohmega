@@ -18,16 +18,15 @@ with open('../logging.yaml') as fobj:
 
 
 # Define a callback
-def print_task(task, client):
-    print("Task scanned: {} {}".format(task[u'id'], task[u'name']))
+def print_task(task, client, config):
+    print("Task scanned: {} {}".format(task[u'id'], task[u'name'].encode("utf-8")))
 
 
 # Set up a command line runner
 runner = CommandLineBatchRunner("credentials.yaml", 599494283563094, "Quick Start")
-# Get the callback manager from the runner
-callback_manager = runner.callback_manager
-# Register our callback. A "project scan" means that based on the "Project Scans"
-# key in our configuration we'll run this named callback for each.
-callback_manager.on_project_scan(print_task)
+# Enable this operation for being able to be included in the configuration.
+# This enables a config block named this function name which can then be used
+# to set up the scan.
+runner.include_project_scan_operation(print_task)
 # Run it!
 runner.run()

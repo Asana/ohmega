@@ -1,7 +1,7 @@
 import logging
 import os
 import asana
-from ohmega.business_logic.asana_callbacks import AsanaCallbacks
+from ohmega.business_logic.project_scanner import ProjectScanner
 from ohmega.services.configuration_service import ConfigurationService
 from . import oauth
 
@@ -22,21 +22,21 @@ class CommandLineBatchRunner(object):
         self._configuration_service = ConfigurationService(
                 self, configuration_task_id)
         self._client = oauth.asana_cli_oauth_client(app_config_filename)
-        self._callback_manager = AsanaCallbacks(self.client)
+        self._project_scanner = ProjectScanner(self.client)
 
     @property
     def client(self):
         return self._client
 
-    @property
-    def callback_manager(self):
-        return self._callback_manager
-
-    @property
-    def configuration(self):
-        return self._configuration_service
+    def include_project_scan_operation(self, callback):
+        """ Delegate a callback to be executed by the project scanner.
+        """
+        self._project_scanner.include_project_scan_operation(callback)
 
     def run(self):
-        # First, give the current configuration to the callbacks manager
-        self._callback_manager.load_config(self.configuration.config())
-        self._callback_manager.execute_project_scan()
+        # First, use the configuration service to load config from Asana
+        self._project_scanner.load_config(self._configuration_service.config())
+        # Do the project scan phase
+        self._project_scanner.execute_project_scans()
+        # Other runners might have other execution mode, like watching a project for changes,
+        # but this runner doesn't do that.

@@ -49,7 +49,7 @@ class ConfigurationService(object):
             self._config_task = self._get_config_task_from_asana()
             if not self._config_task:
                 logger.warn("Could not get configuration task from Asana with id %s",
-                        self._config_task_id)
+                            self._config_task_id)
             self._config = self._read_config_from_task(self._config_task)
             self._update_config_task_description()
             logger.info("Successfully parsed configuration")
