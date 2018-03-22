@@ -21,7 +21,7 @@ OAUTH_CLI_REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
 
 # TODO: This is a bit clunky for just YAML handling, but is mostly proof of
-# concept for # supporting other secret/config systems.
+# concept for supporting other secret/config systems.
 @six.add_metaclass(ABCMeta)
 class AppInfoConfig(object):
 
