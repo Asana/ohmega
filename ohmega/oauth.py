@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
+import logging
 import os.path
 
 import asana
@@ -11,6 +12,9 @@ import yaml
 
 from . import db
 from .errors import AsanaAuthError, ConfigError
+
+
+logger = logging.getLogger(__name__)
 
 
 OAUTH_CLI_REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
@@ -39,6 +43,8 @@ class YamlAppInfoConfig(AppInfoConfig):
 
     @classmethod
     def get_app_info(cls):
+        logger.debug('Retrieving OAuth2 App Info from {}'.format(
+            cls.__YAML_CONFIG_FNAME))
         if os.path.exists(cls.__YAML_CONFIG_FNAME):
             with open(cls.__YAML_CONFIG_FNAME) as fobj:
                 app_info_dict = yaml.load(fobj)
@@ -52,6 +58,8 @@ class YamlAppInfoConfig(AppInfoConfig):
 
     @classmethod
     def store_app_info(cls, client_id, client_secret):
+        logger.debug(
+            'Storing OAuth2 App Info to {}'.format(cls.__YAML_CONFIG_FNAME))
         app_info_dict = {
             'client_id': client_id,
             'client_secret': client_secret
@@ -67,6 +75,7 @@ def asana_cli_oauth_client(app_info=None, reauth=False):
         OAuth2 app.
     :param bool reauth: If True, purge any cached access tokens and
         reauthorizes the app for the user.
+    :return: An OAuth2 authenticated Asana API client.
 
     """
 
@@ -79,11 +88,13 @@ def asana_cli_oauth_client(app_info=None, reauth=False):
             'client_id or client_secret was not specified')
 
     if reauth:
+        logger.debug('Reauthenticating OAuth2 client.')
         token = None
     else:
         token = db.get_oauth_token()
 
     if token:
+        logger.debug('Token exists in database, using in new client.')
         refresh_kwargs = {
             'client_id': client_id,
             'client_secret': client_secret,
@@ -96,6 +107,8 @@ def asana_cli_oauth_client(app_info=None, reauth=False):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=db.save_oauth_token)
     else:
+        logger.debug(
+            "Token doesn't currently exist, running through entire auth flow")
         client = asana.Client.oauth(
             client_id=client_id,
             client_secret=client_secret,

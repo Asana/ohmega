@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import json
+import logging
 
 from six import add_metaclass
 from sqlalchemy import (
@@ -8,9 +9,9 @@ from sqlalchemy import (
 from sqlalchemy.sql import select
 
 
+logger = logging.getLogger(__name__)
+
 DB_ENGINE_URL = 'sqlite:///ohmega.db'
-
-
 metadata = MetaData()
 
 
@@ -48,6 +49,8 @@ class DBManager(object):
     def db_engine(self):
         if not self._db_engine:
             self._db_engine = create_engine(DB_ENGINE_URL, echo=self._echo)
+            logger.debug(
+                "Creating all tables in DB if they don't already exist.")
             metadata.create_all(self._db_engine)
         return self._db_engine
 
@@ -59,6 +62,9 @@ def get_sync_tokens(resource_ids):
         return {}
 
     conn = DBManager().db_engine.connect()
+    logger.debug(
+        'Retrieving all existing sync tokens from database for '
+        'resource IDs: {}'.format(resource_ids))
     sync_tokens = conn.execute(
         select([
             asana_sync_tokens.c.resource_id,
@@ -70,6 +76,9 @@ def get_sync_tokens(resource_ids):
 
 def save_sync_token(resource_id, sync_token):
     conn = DBManager().db_engine.connect()
+    logger.debug(
+        'Saving latest sync token for resource: {}. Sync Token: {}'.format(
+            resource_id, sync_token))
     with conn.begin():
         conn.execute(asana_sync_tokens.delete().where(
             asana_sync_tokens.c.resource_id == resource_id))
@@ -84,6 +93,7 @@ def get_oauth_token():
     oauth_token = None
     conn = DBManager().db_engine.connect()
 
+    logger.debug('Grabbing OAuth2 token from database.')
     oauth_token_row = conn.execute(
         select([asana_oauth_tokens.c.oauth_token])).first()
     if oauth_token_row:
@@ -98,6 +108,9 @@ def get_oauth_token():
 def save_oauth_token(token):
     conn = DBManager().db_engine.connect()
 
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug('Storing OAuth2 token in database:\n{}'.format(
+            json.dumps(token, indent=2)))
     with conn.begin():
         conn.execute(asana_oauth_tokens.delete())
         conn.execute(
