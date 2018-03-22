@@ -1,5 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
+### This is basically a structural stream of consciousness of
+# where we might go from an architectural standpoint.
+# It only partially works, if at all
+
+
 #Apply logic to the tasks in a project.
 # (For now, the tasks can only apply on a per-project basis)
 class TaskLogic:
