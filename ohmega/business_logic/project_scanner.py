@@ -3,63 +3,88 @@
 import logging
 import re
 import yaml
+import six
 
 
 logger = logging.getLogger(__name__)
 
-
-class ProjectScanningConfiguration(object):
-    """Get the project scanning configuration according to the schema we expect.
-    """
-    def __init__(self, config):
-        # There will be a top-level scope called "Project Scans" that we look
-        # to in order to get our config.
-        self._config_scope = None
-        if "Project Scans" in config:
-            self._config_scope = config["Project Scans"]
-        else:
-            logger.warn("No project scan configuration detected")
-
-    def __iter__(self):
-        self._iter_values = iter(self._config_scope.values())
-        return self
-
-    def next(self):
-        return self._iter_values.next()
 
 
 class ProjectScanner(object):
 
     def __init__(self, client):
         self._client = client
-        self._project_scan_callbacks = []
+        self._project_scan_callbacks = {}
         self._config = None
 
     def load_config(self, config):
-        self._config = ProjectScanningConfiguration(config)
-
-    def _task_scan(self, task_id):
-        for callback in self._project_scan_callbacks:
-            task = self._client.tasks.find_by_id(task_id)
-            callback(task, self._client)
+        if "Project Scans" in config:
+            self._config = config["Project Scans"]
 
     def include_project_scan_operation(self, function):
-        self._project_scan_callbacks.append(function)
+        self._project_scan_callbacks[function.__name__] = function
+
+    def _apply_operations(self, task, operations):
+        logger.debug("Task id %s", task[u'id'])
+        task = self._client.tasks.find_by_id(task[u'id'])
+        for operation in operations:
+            logger.debug("Operation %s", operation)
+            self._project_scan_callbacks[operation](
+                    task, self._client, operation)
+
 
     def execute_project_scans(self):
-        for thisconfig in self._config:
-            import pdb; pdb.set_trace()
-            logger.info(thisconfig)
-#        for project_id in self._projects_to_scan:
-#            logger.debug("Scanning %s", project_id)
-#            if self._include_completed:
-#                for task in self._client.tasks.find_all(
-#                        project=project_id,
-#                        fields="id"):
-#                    self._task_scan(task[u'id'])
-#            else:
-#                for task in self._client.tasks.find_all(
-#                        project=project_id,
-#                        completed_since="now",
-#                        fields="id"):
-#
+        if not self._config:
+            logger.warn("No project scan configuration detected")
+            return
+        for scan_config_name, scan_config in six.iteritems(self._config):
+            logger.info("Scanning job named %s", scan_config_name)
+            if scan_config is None:
+                logger.warn("No configuration found for project scan %s",
+                        scan_config_name)
+                continue
+            if "Project Id" not in scan_config:
+                logger.warn("No \"Project Id\" key found for %s", scan_config_name)
+                continue
+            # There always needs to be a project_id
+            project_id = scan_config["Project Id"]
+            # include_completed defaults to False, but can be overridden
+            include_completed = False
+            if "Include Completed" in scan_config:
+                if scan_config["Include Completed"] is True:
+                    logger.debug("Including completed tasks in project scan")
+                    include_completed = True
+            # Limit defaults to 100, but can be overridden
+            limit = 100
+            if "Limit" in scan_config:
+                logger.debug("Setting limit to %d", scan_config["Limit"])
+                limit = scan_config["Limit"]
+            # Operations define what's actually to be done on each task.
+            # There's not much point in this integration if there are no operations.
+            if "Operations" not in scan_config:
+                logger.warn("No \"Operations\" key found for %s", scan_config_name)
+                continue
+            operations = scan_config["Operations"]
+            logger.debug("Scanning over project %s", project_id)
+            # Don't actually use the limit param at this time, but just end
+            # the iteration when we get over the count.
+            tasks_processed = 0
+            if include_completed:
+                for task in self._client.tasks.find_all(
+                        project=project_id,
+                        fields="id"):
+                    if tasks_processed >= limit:
+                        break
+                    self._apply_operations(task, operations)
+                    tasks_processed += 1
+            else:
+                for task in self._client.tasks.find_all(
+                        project=project_id,
+                        completed_since="now",
+                        fields="id"):
+                    if tasks_processed >= limit:
+                        break
+                    self._apply_operations(task, operations)
+                    tasks_processed += 1
+            logger.info("Done with %s", scan_config_name)
+
