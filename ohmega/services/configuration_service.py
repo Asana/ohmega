@@ -86,7 +86,8 @@ class ConfigurationService(object):
 
     def _read_config_from_task(self, task):
         """Recursively descend through subtasks to build a Python config
-        structure
+        structure. This does not use expand, but issues a request per
+        task.
         """
         config_object = dict()
         for subtask in self._runner.client.tasks.subtasks(
