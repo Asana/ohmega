@@ -27,10 +27,13 @@ class ProjectScanner(object):
     def _apply_operations(self, task, operations):
         logger.debug("Task id %s", task[u'id'])
         task = self._client.tasks.find_by_id(task[u'id'])
-        for operation in operations:
-            logger.debug("Operation %s", operation)
-            self._project_scan_callbacks[operation](
-                    task, self._client, operation)
+        for op_name, op_config in six.iteritems(operations):
+            logger.debug("Operation %s", op_name)
+            if not op_name in self._project_scan_callbacks:
+                logger.warn("Can't process operation %s, no function registered with that name", op_name)
+                continue
+            self._project_scan_callbacks[op_name](
+                    task, self._client, op_config)
 
 
     def execute_project_scans(self):
