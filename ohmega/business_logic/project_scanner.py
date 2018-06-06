@@ -25,7 +25,7 @@ class ProjectScanner(object):
         self._project_scan_callbacks[function.__name__] = function
 
     def _apply_operations(self, task, operations):
-        logger.debug("Task id %s", task[u'id'])
+        logger.debug("Task id %s (%s)", task[u'id'], task[u'name'])
         task = self._client.tasks.find_by_id(task[u'id'])
         for op_name, op_config in six.iteritems(operations):
             logger.debug("Operation %s", op_name)
@@ -59,15 +59,18 @@ class ProjectScanner(object):
                     include_completed = True
             # Limit defaults to 100, but can be overridden
             limit = 100
-            if "Limit" in scan_config:
-                logger.debug("Setting limit to %d", scan_config["Limit"])
-                limit = scan_config["Limit"]
+            if "Scan Limit" in scan_config:
+                logger.debug("Setting limit to %d", scan_config["Scan Limit"])
+                limit = scan_config["Scan Limit"]
             # Operations define what's actually to be done on each task.
             # There's not much point in this integration if there are no operations.
             if "Operations" not in scan_config:
                 logger.warn("No \"Operations\" key found for %s", scan_config_name)
                 continue
             operations = scan_config["Operations"]
+            if operations is None:
+                logger.info("No operations in operations config; this scan will be a no-op")
+                continue
             logger.debug("Scanning over project %s", project_id)
             # Don't actually use the limit param at this time, but just end
             # the iteration when we get over the count.
@@ -75,7 +78,7 @@ class ProjectScanner(object):
             if include_completed:
                 for task in self._client.tasks.find_all(
                         project=project_id,
-                        fields="id"):
+                        fields=['id', 'name']):
                     if tasks_processed >= limit:
                         break
                     self._apply_operations(task, operations)
@@ -84,7 +87,7 @@ class ProjectScanner(object):
                 for task in self._client.tasks.find_all(
                         project=project_id,
                         completed_since="now",
-                        fields="id"):
+                        fields=['id', 'name']):
                     if tasks_processed >= limit:
                         break
                     self._apply_operations(task, operations)
