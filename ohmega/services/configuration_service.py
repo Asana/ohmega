@@ -102,9 +102,9 @@ class ConfigurationService(object):
             exception_string = "None"
         else:
             exception_string = traceback.format_tb(sys.exc_info()[2])
-        template = """<b>Last run:</b> {datetime}
-<b>Any exception?</b> {exception}
-<b>Configuration:</b>
+        template = """Last run: {datetime}
+Any exception? {exception}
+Configuration:
 {config}"""
         report = template.format(
                 datetime=datetime.datetime.now().isoformat(),
@@ -114,7 +114,7 @@ class ConfigurationService(object):
                     default_flow_style=False))
         self._runner.client.tasks.update(
                 self._config_task[u'id'],
-                html_notes=report)
+                notes=report)
 
     def _read_config_from_task(self, task):
         """Recursively descend through subtasks to build a Python config
