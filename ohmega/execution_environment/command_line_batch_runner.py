@@ -2,6 +2,7 @@ import logging
 import os
 import asana
 from ohmega.business_logic.project_scanner import ProjectScanner
+from ohmega.business_logic.tag_scanner import TagScanner
 from ohmega.services.configuration_service import ConfigurationService
 from . import oauth
 
@@ -23,6 +24,7 @@ class CommandLineBatchRunner(object):
                 self, configuration_task_id)
         self._client = oauth.asana_cli_oauth_client(app_config_filename)
         self._project_scanner = ProjectScanner(self.client)
+        self._tag_scanner = TagScanner(self.client)
 
     @property
     def client(self):
@@ -33,10 +35,21 @@ class CommandLineBatchRunner(object):
         """
         self._project_scanner.include_project_scan_operation(callback)
 
+    def include_tag_scan_operation(self, callback):
+        """ Delegate a callback to be executed by the tag scanner.
+        """
+        self._tag_scanner.include_tag_scan_operation(callback)
+
+
+
     def run(self):
         # First, use the configuration service to load config from Asana
-        self._project_scanner.load_config(self._configuration_service.config())
+        config = self._configuration_service.config()
         # Do the project scan phase
+        self._project_scanner.load_config(config)
         self._project_scanner.execute_project_scans()
+        # Do the tag scans
+        self._tag_scanner.load_config(config)
+        self._tag_scanner.execute_tag_scans()
         # Other runners might have other execution mode, like watching a project for changes,
         # but this runner doesn't do that.
