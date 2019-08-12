@@ -23,6 +23,8 @@ class CommandLineBatchRunner(object):
         self._configuration_service = ConfigurationService(
                 self, configuration_task_id)
         self._client = oauth.asana_cli_oauth_client(app_config_filename)
+        # Hhmega is compatible with string ids.
+        self._client.headers={'asana-enable': 'string_ids'}
         self._project_scanner = ProjectScanner(self.client)
         self._tag_scanner = TagScanner(self.client)
 

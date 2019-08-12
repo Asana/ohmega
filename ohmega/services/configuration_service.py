@@ -20,7 +20,7 @@
 # the config.
 
 # The config is now set.
-
+import os
 import datetime
 import logging
 import sys
@@ -72,6 +72,7 @@ class ConfigurationService(object):
         self._config_task_id = config_task_id
         self._config_task = None
         self._config = None
+        self._ohmega_version = os.popen("git rev-parse HEAD").read().strip()
 
     def config(self):
         return self.read_config_from_asana()
@@ -104,16 +105,18 @@ class ConfigurationService(object):
             exception_string = traceback.format_tb(sys.exc_info()[2])
         template = """Last run: {datetime}
 Any exception? {exception}
+Git revision: {revision}
 Configuration:
 {config}"""
         report = template.format(
                 datetime=datetime.datetime.now().isoformat(),
+                revision = self._ohmega_version,
                 exception=exception_string,
                 config=yaml.safe_dump(
                     self._config,
                     default_flow_style=False))
         self._runner.client.tasks.update(
-                self._config_task[u'id'],
+                self._config_task[u'gid'],
                 notes=report)
 
     def _read_config_from_task(self, task):
@@ -123,7 +126,7 @@ Configuration:
         """
         config_object = OrderedDict()
         for subtask in self._runner.client.tasks.subtasks(
-                task[u'id'],
+                task[u'gid'],
                 fields="name,notes,subtasks,completed"):
             if subtask[u'completed'] == True:
                 logger.info("Task %s is completed (deactivated); omitting from config",
