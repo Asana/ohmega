@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 # they care about, and perhaps the task fields they care about?
 class EventsManager(object):
     __TASK_FIELDS = [
-        '(this|subtasks).id',
+        '(this|subtasks).gid',
         '(this|subtasks).name',
-        'memberships.(project|section).(id|name)',
-        'subtasks.tags.(id|name)',
+        'memberships.(project|section).(gid|name)',
+        'subtasks.tags.(gid|name)',
     ]
 
     def __init__(self, asana_client):
@@ -58,7 +58,7 @@ class EventsManager(object):
         # event, so we should look into whether we need to pull down story
         # events as well.
         return frozenset(
-            e['resource']['id'] for e in events
+            e['resource']['gid'] for e in events
             if e['type'] == 'task'
             and e['action'] in ('added', 'changed')
         )
@@ -129,14 +129,14 @@ class EventsManager(object):
         :rtype: dict
 
         """
-        resource_ids = [r['id'] for r in resources]
+        resource_ids = [r['gid'] for r in resources]
         logger.info(
             'Grabbing sync tokens for resources: {}'.format(resource_ids))
         sync_tokens = db.get_sync_tokens(resource_ids)
         resource_tasks = {}
         logger.info('Grabbing tasks for resources: {}'.format(resource_ids))
         for resource in resources:
-            resource_id = resource['id']
+            resource_id = resource['gid']
             try:
                 logger.debug(
                     'Grabbing tasks for resource: {}'.format(resource_id))

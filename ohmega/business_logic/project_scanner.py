@@ -9,7 +9,6 @@ import six
 logger = logging.getLogger(__name__)
 
 
-
 class ProjectScanner(object):
 
     def __init__(self, client):
@@ -25,8 +24,8 @@ class ProjectScanner(object):
         self._project_scan_callbacks[function.__name__] = function
 
     def _apply_operations(self, task, operations):
-        logger.debug("Task id %s (%s)", task[u'id'], task[u'name'])
-        task = self._client.tasks.find_by_id(task[u'id'])
+        logger.debug("Task gid %s (%s)", task[u'gid'], task[u'name'])
+        task = self._client.tasks.find_by_id(task[u'gid'])
         for op_name, op_config in six.iteritems(operations):
             logger.debug("Operation %s", op_name)
             if not op_name in self._project_scan_callbacks:
@@ -78,7 +77,7 @@ class ProjectScanner(object):
             if include_completed:
                 for task in self._client.tasks.find_all(
                         project=project_id,
-                        fields=['id', 'name']):
+                        fields=['gid', 'name']):
                     if tasks_processed >= limit:
                         break
                     self._apply_operations(task, operations)
@@ -87,7 +86,7 @@ class ProjectScanner(object):
                 for task in self._client.tasks.find_all(
                         project=project_id,
                         completed_since="now",
-                        fields=['id', 'name']):
+                        fields=['gid', 'name']):
                     if tasks_processed >= limit:
                         break
                     self._apply_operations(task, operations)
