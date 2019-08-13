@@ -4,6 +4,7 @@ import logging
 import re
 import yaml
 import six
+from concurrent.futures import ThreadPoolExecutor
 
 
 logger = logging.getLogger(__name__)
@@ -23,8 +24,10 @@ class ProjectScanner(object):
     def include_project_scan_operation(self, function):
         self._project_scan_callbacks[function.__name__] = function
 
-    def _apply_operations(self, task, operations):
-        logger.debug("Task gid %s (%s)", task[u'gid'], task[u'name'])
+    def apply_operations(self, task_operations):
+        task = task_operations[u'task']
+        operations = task_operations[u'operations']
+        logger.info("Task gid %s (%s)", task[u'gid'], task[u'name'])
         task = self._client.tasks.find_by_id(task[u'gid'])
         for op_name, op_config in six.iteritems(operations):
             logger.debug("Operation %s", op_name)
@@ -33,6 +36,7 @@ class ProjectScanner(object):
                 continue
             self._project_scan_callbacks[op_name](
                     task, self._client, op_config)
+        return task, True
 
 
     def execute_project_scans(self):
@@ -74,13 +78,14 @@ class ProjectScanner(object):
             # Don't actually use the limit param at this time, but just end
             # the iteration when we get over the count.
             tasks_processed = 0
+            task_operations_maps = []
             if include_completed:
                 for task in self._client.tasks.find_all(
                         project=project_id,
                         fields=['gid', 'name']):
                     if tasks_processed >= limit:
                         break
-                    self._apply_operations(task, operations)
+                    task_operations_maps.append({u'task': task, u'operations': operations})
                     tasks_processed += 1
             else:
                 for task in self._client.tasks.find_all(
@@ -89,7 +94,15 @@ class ProjectScanner(object):
                         fields=['gid', 'name']):
                     if tasks_processed >= limit:
                         break
-                    self._apply_operations(task, operations)
+                    task_operations_maps.append({u'task': task, u'operations': operations})
                     tasks_processed += 1
+            if scan_config["Parallel"] is True:
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    results = executor.map(self.apply_operations, task_operations_maps)
+                    for (task, result) in results:
+                        logger.info(result)
+            else:
+                """ Serial operation """
+                map(self.apply_operations, task_operations_maps)
             logger.info("Done with %s", scan_config_name)
 
