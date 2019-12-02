@@ -103,6 +103,6 @@ class ProjectScanner(object):
                         logger.info(result)
             else:
                 """ Serial operation """
-                map(self.apply_operations, task_operations_maps)
+                list(map(self.apply_operations, task_operations_maps))
             logger.info("Done with %s", scan_config_name)
 

@@ -135,8 +135,8 @@ Configuration:
             config = yaml.load(subtask[u'name'])
             # If a config is of type "dict", infer it's a leaf node.
             if type(config) is dict:
-                key = config.keys()[0]
-                value = config.values()[0]
+                key = list(config.keys())[0]
+                value = list(config.values())[0]
                 config_object[key] = value
             # If a config is of type "string"
             if type(config) is str:
